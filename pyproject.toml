@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "certbot-dns-dynadot"
@@ -8,7 +9,8 @@ description = "Dynadot DNS Authenticator plugin for Certbot"
 authors = [
     { name = "Dmitriy Geels", email = "dmitrriy.geels@gmail.com" }
 ]
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.rst"
 keywords = ["certbot", "dns", "dynadot", "authenticator", "plugin"]
 dependencies = [
@@ -38,6 +40,7 @@ classifiers = [
 
 [project.urls]
 homepage = "https://github.com/dmig/certbot-dns-dynadot"
+issues = "https://github.com/dmig/certbot-dns-dynadot/issues"
 
 [project.entry-points."certbot.plugins"]
 dns-dynadot = "certbot_dns_dynadot.dns_dynadot:Authenticator"
