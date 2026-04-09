@@ -34,18 +34,15 @@ To start using DNS authentication for dynadot, pass the following arguments on
 certbot's command line:
 
 ============================================================= ==============================================
-``--authenticator certbot-dns-dynadot:dns-dynadot``          select the authenticator plugin (Required)
+``--authenticator dns-dynadot``                               select the authenticator plugin (Required)
 
-``--certbot-dns-dynadot:dns-dynadot-credentials``         dynadot Remote User credentials
+``--dns-dynadot-credentials``                                 dynadot Remote User credentials
                                                               INI file. (Required)
 
-``--certbot-dns-dynadot:dns-dynadot-propagation-seconds`` | waiting time for DNS to propagate before asking
+``--dns-dynadot-propagation-seconds``                         | waiting time for DNS to propagate before asking
                                                               | the ACME server to verify the DNS record.
                                                               | (Default: 120, Recommended: >= 600)
 ============================================================= ==============================================
-
-(Note that the verbose and seemingly redundant ``certbot-dns-dynadot:`` prefix
-is currently imposed by certbot for external plugins.)
 
 
 Credentials
@@ -55,11 +52,11 @@ An example ``credentials.ini`` file:
 
 .. code-block:: ini
 
-   certbot_dns_dynadot:dns_dynadot_api_key = your-api-key
-   certbot_dns_dynadot:dns_dynadot_secret = your-api-secret
+   dns_dynadot_api_key = your-api-key
+   dns_dynadot_secret = your-api-secret
 
 The path to this file can be provided interactively or using the
-``--certbot-dns-dynadot:dns-dynadot-credentials`` command-line argument. Certbot
+``--dns-dynadot-credentials`` command-line argument. Certbot
 records the path to this file for use during renewal, but does not store the
 file's contents.
 
@@ -87,9 +84,9 @@ To acquire a single certificate for both ``example.com`` and
 .. code-block:: bash
 
    certbot certonly \
-     --authenticator certbot-dns-dynadot:dns-dynadot \
-     --certbot-dns-dynadot:dns-dynadot-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
-     --certbot-dns-dynadot:dns-dynadot-propagation-seconds 900 \
+     --authenticator dns-dynadot \
+     --dns-dynadot-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
+     --dns-dynadot-propagation-seconds 900 \
      --server https://acme-v02.api.letsencrypt.org/directory \
      --agree-tos \
      --rsa-key-size 4096 \
@@ -119,9 +116,9 @@ Once that's finished, the application can be run as follows::
        -v /etc/letsencrypt:/etc/letsencrypt \
        --cap-drop=all \
        certbot/dns-dynadot certonly \
-       --authenticator certbot-dns-dynadot:dns-dynadot \
-       --certbot-dns-dynadot:dns-dynadot-propagation-seconds 900 \
-       --certbot-dns-dynadot:dns-dynadot-credentials \
+       --authenticator dns-dynadot \
+       --dns-dynadot-propagation-seconds 900 \
+       --dns-dynadot-credentials \
            /etc/letsencrypt/.secrets/domain.tld.ini \
        --no-self-upgrade \
        --keep-until-expiring --non-interactive --expand \
