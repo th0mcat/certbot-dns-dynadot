@@ -1,0 +1,39 @@
+[project]
+name = "certbot-dns-dynadot"
+version = "0.1.0"
+description = "Dynadot DNS Authenticator plugin for Certbot"
+authors = [
+    { name = "Dmitriy Geels", email = "dmitrriy.geels@gmail.com" }
+]
+license = { text = "Apache-2.0" }
+readme = "README.rst"
+homepage = "https://github.com/dmig/certbot-dns-dynadot"
+keywords = ["certbot", "dns", "dynadot", "authenticator", "plugin"]
+dependencies = [
+    "certbot>=2.11.0",
+    "requests",
+    "setuptools"
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Plugins",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Security",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+
+[project.entry-points."certbot.plugins"]
+dns-dynadot = "certbot_dns_dynadot.dns_dynadot:Authenticator"
