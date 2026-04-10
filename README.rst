@@ -41,10 +41,8 @@ certbot's command line:
 
 ``--dns-dynadot-propagation-seconds``                         | waiting time for DNS to propagate before asking
                                                               | the ACME server to verify the DNS record.
+                                                              | (Default: 300, Recommended: >= 600)
 ============================================================= ==============================================
-
-**NOTE:** dynadot default DNS TTL is set to 8 hours, it means you'll need to set `--dns-dynadot-propagation-seconds``
-to ``28800`` or set TTL to lower value 8 hours in advance, so TXT records may propagate faster.
 
 
 Credentials
