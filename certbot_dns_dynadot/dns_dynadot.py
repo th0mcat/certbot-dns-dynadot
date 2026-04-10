@@ -13,7 +13,7 @@ class Authenticator(DNSAuthenticator):
     client: DynadotClient
 
     @classmethod
-    def add_parser_arguments(cls, add, default_propagation_seconds=30):
+    def add_parser_arguments(cls, add, default_propagation_seconds=300):
         super().add_parser_arguments(
             add, default_propagation_seconds=default_propagation_seconds
         )
