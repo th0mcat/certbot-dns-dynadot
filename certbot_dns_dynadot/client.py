@@ -8,6 +8,8 @@ from uuid import uuid4
 
 import requests
 from certbot import errors
+from certbot.errors import PluginError
+from certbot.plugins.dns_common import base_domain_name_guesses
 
 
 class DynadotClient:
@@ -62,6 +64,13 @@ class DynadotClient:
         return data
 
     @cache
+    def get_domains_list(self) -> set[str]:
+        domains: list[dict[str, Any]] = self._api_request("get", "domains")["data"][
+            "domain_info"
+        ]
+        return {d["domain_name"] for d in domains}
+
+    @cache
     def get_dns(self, domain):
         return self._api_request("get", "domains", domain, "records")["data"][
             "name_server_settings"
@@ -72,7 +81,7 @@ class DynadotClient:
         return self._api_request("post", "domains", domain, "records", params)
 
     def add_txt_record(self, fqdn: str, value: str):
-        domain = self._extract_domain(fqdn)
+        subdomain, domain = self._extract_domain(fqdn)
 
         ns_settings = self.get_dns(domain)
 
@@ -81,7 +90,7 @@ class DynadotClient:
             match = ("txt", value, None)
         else:
             records = ns_settings.get("sub_domains", [])
-            match = ("txt", value, fqdn)
+            match = ("txt", value, subdomain)
 
         # verify we don't have record with value already added
         for item in records:
@@ -99,7 +108,7 @@ class DynadotClient:
             ns_settings.setdefault("main_domains", []).append(new_record)
         else:
             ns_settings.setdefault("sub_domains", []).append(
-                new_record | {"sub_host": fqdn}
+                new_record | {"sub_host": subdomain}
             )
 
         self.set_dns(
@@ -110,7 +119,7 @@ class DynadotClient:
         self.get_dns.cache_clear()
 
     def remove_txt_record(self, fqdn, value):
-        domain = self._extract_domain(fqdn)
+        subdomain, domain = self._extract_domain(fqdn)
 
         ns_settings = self.get_dns(domain)
 
@@ -120,7 +129,7 @@ class DynadotClient:
                 item for item in ns_settings.get("main_domains", []) if item != match
             ]
         else:
-            match = {"record_type": "txt", "value": value, "sub_host": fqdn}
+            match = {"record_type": "txt", "value": value, "sub_host": subdomain}
             ns_settings["sub_domains"] = [
                 item for item in ns_settings.get("sub_domains", []) if item != match
             ]
@@ -134,9 +143,12 @@ class DynadotClient:
         )
         self.get_dns.cache_clear()
 
-    def _extract_domain(self, fqdn):
-        parts = fqdn.split(".")
-        return ".".join(parts[-2:])
+    def _extract_domain(self, fqdn) -> tuple[str, str]:
+        guesses = base_domain_name_guesses(fqdn)
+        domain = next(iter(d for d in guesses if d in self.get_domains_list()), None)
+        if not domain:
+            raise PluginError(f"Failed to extract base domain from {fqdn}")
+        return fqdn[: -len(domain) - 1], domain
 
     def _rename_value_fields(self, dns_response):
         # Dynadot returns values as 'value' and expects them as 'record_value1'
