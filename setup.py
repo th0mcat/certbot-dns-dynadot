@@ -1,8 +1,8 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='certbot-dns-dynadot',
-    version='0.1.3',
+    version='0.2.0',
     packages=find_packages(),
     install_requires=[
         'certbot>=2.0.0',
