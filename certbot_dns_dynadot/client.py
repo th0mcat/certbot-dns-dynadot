@@ -2,7 +2,6 @@ import base64
 import hmac
 import json
 from functools import cache
-from itertools import chain
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -65,19 +64,17 @@ class DynadotClient:
 
     @cache
     def get_domains_list(self) -> set[str]:
-        domains: list[dict[str, Any]] = self._api_request("get", "domains")["data"][
-            "domain_info"
-        ]
-        return {d["domain_name"] for d in domains}
+        response: dict[str, Any] = self._api_request("get", "domains")
+        return {d["domain_name"] for d in response["data"]["domain_info_list"]}
 
     @cache
     def get_dns(self, domain):
-        return self._api_request("get", "domains", domain, "records")["data"][
-            "name_server_settings"
-        ]
+        response =  self._api_request("get", "domains", domain, "records")
+        return response["data"]["glue_info"]
 
     def set_dns(self, domain, records, sub_records):
         params = {"dns_main_list": records, "sub_list": sub_records}
+        self.get_dns.cache_clear()
         return self._api_request("post", "domains", domain, "records", params)
 
     def add_txt_record(self, fqdn: str, value: str):
@@ -86,18 +83,16 @@ class DynadotClient:
         ns_settings = self.get_dns(domain)
 
         if domain == fqdn:
-            records = ns_settings.get("main_domains", [])
+            records = ns_settings.get("dns_main_list", [])
             match = ("txt", value, None)
         else:
-            records = ns_settings.get("sub_domains", [])
+            records = ns_settings.get("dns_sub_list", [])
             match = ("txt", value, subdomain)
 
         # verify we don't have record with value already added
         for item in records:
-            if (item["record_type"], item["value"], item.get("sub_host")) == match:
+            if (item["record_type"], item["record_value1"], item.get("sub_host")) == match:
                 return
-
-        self._rename_value_fields(ns_settings)
 
         new_record = {
             "record_type": "txt",
@@ -105,16 +100,16 @@ class DynadotClient:
         }
 
         if domain == fqdn:
-            ns_settings.setdefault("main_domains", []).append(new_record)
+            ns_settings.setdefault("dns_main_list", []).append(new_record)
         else:
-            ns_settings.setdefault("sub_domains", []).append(
+            ns_settings.setdefault("dns_sub_list", []).append(
                 new_record | {"sub_host": subdomain}
             )
 
         self.set_dns(
             domain,
-            ns_settings.get("main_domains", []),
-            ns_settings.get("sub_domains", []),
+            ns_settings.get("dns_main_list", []),
+            ns_settings.get("dns_sub_list", []),
         )
         self.get_dns.cache_clear()
 
@@ -125,21 +120,19 @@ class DynadotClient:
 
         if domain == fqdn:
             match = {"record_type": "txt", "value": value}
-            ns_settings["main_domains"] = [
-                item for item in ns_settings.get("main_domains", []) if item != match
+            ns_settings["dns_main_list"] = [
+                item for item in ns_settings.get("dns_main_list", []) if item != match
             ]
         else:
             match = {"record_type": "txt", "value": value, "sub_host": subdomain}
-            ns_settings["sub_domains"] = [
-                item for item in ns_settings.get("sub_domains", []) if item != match
+            ns_settings["dns_sub_list"] = [
+                item for item in ns_settings.get("dns_sub_list", []) if item != match
             ]
-
-        self._rename_value_fields(ns_settings)
 
         self.set_dns(
             domain,
-            ns_settings.get("main_domains", []),
-            ns_settings.get("sub_domains", []),
+            ns_settings.get("dns_main_list", []),
+            ns_settings.get("dns_sub_list", []),
         )
         self.get_dns.cache_clear()
 
@@ -149,13 +142,3 @@ class DynadotClient:
         if not domain:
             raise PluginError(f"Failed to extract base domain from {fqdn}")
         return fqdn[: -len(domain) - 1], domain
-
-    def _rename_value_fields(self, dns_response):
-        # Dynadot returns values as 'value' and expects them as 'record_value1'
-
-        for item in chain(
-            dns_response.get("main_domains", []), dns_response.get("sub_domains", [])
-        ):
-            value = item.pop("value", None)
-            if value is not None:
-                item["record_value1"] = value
