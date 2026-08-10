@@ -40,24 +40,19 @@ class Authenticator(DNSAuthenticator):
         secret = credentials.conf("secret")
         if not api_key:
             raise errors.PluginError(
-                "{}: dns_dynadot_api_key is required.".format(
-                    credentials.confobj.filename
-                )
+                f"{credentials.confobj.filename}: dns_dynadot_api_key is required."
             )
         if not secret:
             raise errors.PluginError(
-                "{}: dns_dynadot_secret is required".format(
-                    credentials.confobj.filename
-                )
+                f"{credentials.confobj.filename}: dns_dynadot_secret is required"
             )
 
         if (api_key.startswith("sandbox_") and not secret.startswith("sandbox_")) or (
             not api_key.startswith("sandbox_") and secret.startswith("sandbox_")
         ):
             raise errors.PluginError(
-                "{}: Either dns_dynadot_api_key, or dns_dynadot_secret is for sandbox and other one is for production.".format(
-                    credentials.confobj.filename
-                )
+                f"{credentials.confobj.filename}: Either dns_dynadot_api_key, "
+                "or dns_dynadot_secret is for sandbox and other one is for production."
             )
 
     def _perform(self, domain: str, validation_name: str, validation: str):
