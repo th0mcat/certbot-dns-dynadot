@@ -73,7 +73,7 @@ class DynadotClient:
         return response["data"]["glue_info"]
 
     def set_dns(self, domain, records, sub_records):
-        params = {"dns_main_list": records, "sub_list": sub_records}
+        params = {"dns_main_list": records, "dns_sub_list": sub_records}
         self.get_dns.cache_clear()
         return self._api_request("post", "domains", domain, "records", params)
 
@@ -119,14 +119,24 @@ class DynadotClient:
         ns_settings = self.get_dns(domain)
 
         if domain == fqdn:
-            match = {"record_type": "txt", "value": value}
+            match = {"record_type": "txt", "record_value1": value}
             ns_settings["dns_main_list"] = [
-                item for item in ns_settings.get("dns_main_list", []) if item != match
+                item
+                for item in ns_settings.get("dns_main_list", [])
+                if {"record_type": item["record_type"], "record_value1": item["record_value1"]}
+                != match
             ]
         else:
-            match = {"record_type": "txt", "value": value, "sub_host": subdomain}
+            match = {"record_type": "txt", "record_value1": value, "sub_host": subdomain}
             ns_settings["dns_sub_list"] = [
-                item for item in ns_settings.get("dns_sub_list", []) if item != match
+                item
+                for item in ns_settings.get("dns_sub_list", [])
+                if {
+                    "record_type": item["record_type"],
+                    "record_value1": item["record_value1"],
+                    "sub_host": item.get("sub_host"),
+                }
+                != match
             ]
 
         self.set_dns(
